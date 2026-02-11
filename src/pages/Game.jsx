@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useGameLoop } from '../hooks/useGameLoop'
+import { useAI } from '../hooks/useAI'
 import TimeControls from '../components/TimeControls'
 import EventModal from '../components/EventModal'
 import NotificationPanel from '../components/NotificationPanel'
 import GameStats from '../components/GameStats'
 import ManagementTabs from '../components/ManagementTabs'
+import AllianceProposal from '../components/AllianceProposal'
+import WarStatus from '../components/WarStatus'
 
 function Game() {
   const location = useLocation()
@@ -15,8 +18,9 @@ function Game() {
   const { state, initializeGame } = useGame()
   const [selectedEvent, setSelectedEvent] = useState(null)
   
-  // Start game loop
+  // Start game loop and AI
   useGameLoop()
+  useAI()
 
   useEffect(() => {
     // Redirect if no era/country selected
@@ -81,6 +85,9 @@ function Game() {
         {/* Time Controls */}
         <TimeControls />
 
+        {/* War Status */}
+        {state.wars.length > 0 && <WarStatus />}
+
         {/* Game Stats */}
         <GameStats />
 
@@ -93,7 +100,8 @@ function Game() {
           <div className="bg-gray-900 rounded h-64 flex items-center justify-center">
             <div className="text-center text-gray-500">
               <div className="text-4xl mb-2">🗺️</div>
-              <p>Interactive map coming in Phase 4</p>
+              <p>Interactive map coming soon</p>
+              <p className="text-sm mt-2">Focus: Gameplay mechanics (AI is active!)</p>
             </div>
           </div>
         </div>
@@ -103,6 +111,9 @@ function Game() {
       {selectedEvent && (
         <EventModal event={selectedEvent} onClose={handleEventClose} />
       )}
+
+      {/* Alliance Proposals */}
+      <AllianceProposal />
 
       {/* Notifications */}
       <NotificationPanel />

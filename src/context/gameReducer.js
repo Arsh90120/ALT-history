@@ -247,6 +247,61 @@ export function gameReducer(state, action) {
         ]
       }
     
+    case 'ADD_NOTIFICATION':
+      return {
+        ...state,
+        notifications: [...state.notifications, action.payload]
+      }
+    
+    case 'DECLARE_WAR':
+      return {
+        ...state,
+        wars: [...state.wars, action.payload.country],
+        relationships: {
+          ...state.relationships,
+          [action.payload.country]: -100
+        },
+        morale: {
+          ...state.morale,
+          current: Math.max(0, state.morale.current - 10)
+        }
+      }
+    
+    case 'ALLIANCE_PROPOSAL':
+      return {
+        ...state,
+        pendingDecisions: [
+          ...state.pendingDecisions,
+          {
+            id: Date.now(),
+            type: 'alliance',
+            country: action.payload.country,
+            timestamp: state.currentDate
+          }
+        ]
+      }
+    
+    case 'ACCEPT_ALLIANCE':
+      return {
+        ...state,
+        alliances: [...state.alliances, action.payload.country],
+        relationships: {
+          ...state.relationships,
+          [action.payload.country]: Math.min(100, (state.relationships[action.payload.country] || 0) + 30)
+        },
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country)
+      }
+    
+    case 'REJECT_ALLIANCE':
+      return {
+        ...state,
+        relationships: {
+          ...state.relationships,
+          [action.payload.country]: Math.max(-100, (state.relationships[action.payload.country] || 0) - 20)
+        },
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country)
+      }
+    
     case 'LOAD_GAME':
       return action.payload
     
