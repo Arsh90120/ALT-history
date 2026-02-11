@@ -1,17 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { eras } from '../data/eras'
 import HistoricalQuote from '../components/HistoricalQuote'
 import HistoricalFact from '../components/HistoricalFact'
+import { loadGame, getSaveInfo } from '../utils/saveGame'
+import { useGame } from '../context/GameContext'
 
 function Home() {
   const navigate = useNavigate()
+  const { dispatch } = useGame()
   const [selectedEra, setSelectedEra] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState(null)
+  const [saveInfo, setSaveInfo] = useState(null)
+
+  useEffect(() => {
+    const info = getSaveInfo()
+    setSaveInfo(info)
+  }, [])
 
   const handleStartGame = () => {
     if (selectedEra && selectedCountry) {
       navigate('/game', { state: { era: selectedEra, country: selectedCountry } })
+    }
+  }
+
+  const handleContinue = () => {
+    const result = loadGame()
+    if (result.success) {
+      dispatch({ type: 'LOAD_GAME', payload: result.data })
+      navigate('/game', { state: { era: result.data.era, country: result.data.playerCountry } })
     }
   }
 
@@ -34,6 +51,26 @@ function Home() {
             Rewrite the past. Shape the future. Lead nations through pivotal moments in history.
           </p>
           <HistoricalQuote />
+
+          {/* Continue Button */}
+          {saveInfo && (
+            <div className="animate-fade-in">
+              <button
+                onClick={handleContinue}
+                className="
+                  btn-premium px-10 py-4 bg-accent hover:bg-yellow-400 text-dark 
+                  rounded-full font-bold text-lg transition-all mb-4
+                  hover:scale-105 hover:shadow-2xl hover:shadow-accent/50
+                "
+              >
+                ▶ Continue Game
+              </button>
+              <div className="text-sm text-gray-500">
+                {saveInfo.country} • {saveInfo.era} • Day {saveInfo.daysPassed}
+              </div>
+              <div className="h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent my-8"></div>
+            </div>
+          )}
         </div>
 
         {/* Era Selection */}
