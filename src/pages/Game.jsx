@@ -12,6 +12,7 @@ import ManagementTabs from '../components/ManagementTabs'
 import AllianceProposal from '../components/AllianceProposal'
 import WarStatus from '../components/WarStatus'
 import HistoricalFact from '../components/HistoricalFact'
+import WorldMap from '../components/WorldMap'
 import { autoSave } from '../utils/saveGame'
 
 function Game() {
@@ -115,20 +116,13 @@ function Game() {
 
         <ManagementTabs />
 
-        {/* World Status */}
+        {/* Interactive World Map */}
         <div className="card-premium p-6 rounded-2xl">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">World Status</h2>
+            <h2 className="text-xl font-bold">🌍 World Map</h2>
             <div className="text-sm text-gray-500">Live Intelligence</div>
           </div>
-          <div className="glass rounded-xl p-8 flex items-center justify-center">
-            <div className="text-center text-gray-500 space-y-3">
-              <div className="text-5xl">🗺️</div>
-              <p className="font-semibold">Interactive Map</p>
-              <p className="text-sm">Visual representation coming soon</p>
-              <HistoricalFact className="!text-gray-600 mt-4" />
-            </div>
-          </div>
+          <WorldMap />
         </div>
 
         <div className="text-center py-4">
