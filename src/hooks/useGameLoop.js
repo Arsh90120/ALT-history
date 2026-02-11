@@ -4,9 +4,26 @@ import { checkEventTriggers } from '../data/events'
 
 // Main game loop hook - handles time advancement and event triggering
 export function useGameLoop() {
-  const { state, dispatch, advanceTime, triggerEvent } = useGame()
+  const { state, dispatch, advanceTime, triggerEvent, pauseGame, setSpeed } = useGame()
   const intervalRef = useRef(null)
   const lastCheckRef = useRef(null)
+  const skipModeRef = useRef(false)
+  const previousEventCountRef = useRef(0)
+
+  useEffect(() => {
+    // Track if we're in skip mode (speed 60)
+    skipModeRef.current = state.speed === 60
+  }, [state.speed])
+
+  useEffect(() => {
+    // Auto-pause when new event appears during skip mode
+    if (skipModeRef.current && state.activeEvents.length > previousEventCountRef.current) {
+      pauseGame()
+      setSpeed(1)
+      skipModeRef.current = false
+    }
+    previousEventCountRef.current = state.activeEvents.length
+  }, [state.activeEvents.length])
 
   useEffect(() => {
     // Only run if game is started and not paused
@@ -25,9 +42,9 @@ export function useGameLoop() {
       // Advance time by 1 day
       advanceTime(1)
 
-      // Check for events every 7 days to avoid spam
+      // Check for events every 7 days to avoid spam (or every day in skip mode)
       const daysPassed = state.daysPassed + 1
-      if (daysPassed % 7 === 0 || !lastCheckRef.current) {
+      if (skipModeRef.current || daysPassed % 7 === 0 || !lastCheckRef.current) {
         checkAndTriggerEvents()
         lastCheckRef.current = state.currentDate
       }
