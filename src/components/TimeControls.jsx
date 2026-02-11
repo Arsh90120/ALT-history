@@ -18,47 +18,52 @@ function TimeControls() {
   }
 
   return (
-    <div className="bg-gray-800 p-6 rounded-lg">
-      <div className="flex items-center justify-between mb-4">
+    <div className="card-premium p-6 rounded-2xl">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-3xl font-black tracking-tight">
             {state.currentDate ? formatDateShort(state.currentDate) : 'Not Started'}
           </h2>
-          <p className="text-gray-400 text-sm">
+          <p className="text-sm text-gray-500 mt-1">
             Day {state.daysPassed} • {state.era}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {state.isPaused ? (
             <button
               onClick={resumeGame}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded transition font-semibold"
+              className="btn-premium px-6 py-3 bg-green-600/90 hover:bg-green-500 rounded-xl transition-all font-bold flex items-center gap-2 hover:scale-105"
             >
-              ▶ Resume
+              <span className="text-lg">▶</span>
+              Resume
             </button>
           ) : (
             <button
               onClick={pauseGame}
-              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded transition font-semibold"
+              className="btn-premium px-6 py-3 bg-yellow-600/90 hover:bg-yellow-500 rounded-xl transition-all font-bold flex items-center gap-2 hover:scale-105"
             >
-              ⏸ Pause
+              <span className="text-lg">⏸</span>
+              Pause
             </button>
           )}
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
+        <div className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
+          Speed
+        </div>
         {speedOptions.map(option => (
           <button
             key={option.value}
             onClick={() => setSpeed(option.value)}
             className={`
-              px-4 py-2 rounded transition font-semibold
+              btn-premium px-5 py-2 rounded-xl transition-all font-bold
               ${
                 state.speed === option.value
-                  ? 'bg-accent text-dark'
-                  : 'bg-gray-700 hover:bg-gray-600 text-light'
+                  ? 'bg-accent text-dark scale-105 shadow-glow'
+                  : 'glass hover:bg-gray-700/50'
               }
             `}
             title={option.description}
@@ -67,19 +72,25 @@ function TimeControls() {
           </button>
         ))}
 
+        <div className="h-8 w-px bg-gray-700 mx-2"></div>
+
         <button
           onClick={handleSkipToEvent}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded transition font-semibold ml-auto"
+          className="btn-premium px-5 py-2 bg-purple-600/90 hover:bg-purple-500 rounded-xl transition-all font-bold flex items-center gap-2 hover:scale-105"
         >
-          ⏩ Skip to Next Event
+          <span className="text-lg">⏩</span>
+          Skip to Event
         </button>
       </div>
 
       {state.activeEvents.length > 0 && (
-        <div className="mt-4 p-3 bg-red-900/30 border-2 border-red-500 rounded animate-pulse">
-          <p className="text-red-300 font-semibold">
-            ⚠️ {state.activeEvents.length} event{state.activeEvents.length > 1 ? 's' : ''} require{state.activeEvents.length === 1 ? 's' : ''} your attention!
-          </p>
+        <div className="mt-6 p-4 bg-red-500/10 border-2 border-red-500 rounded-xl animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">⚠️</div>
+            <p className="text-red-300 font-bold">
+              {state.activeEvents.length} event{state.activeEvents.length > 1 ? 's' : ''} require{state.activeEvents.length === 1 ? 's' : ''} your attention!
+            </p>
+          </div>
         </div>
       )}
     </div>
