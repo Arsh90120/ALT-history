@@ -16,29 +16,26 @@ function GameStats() {
       label: 'Treasury',
       value: formatCurrency(state.resources.treasury),
       subtext: `${budgetBalance >= 0 ? '+' : ''}${formatCurrency(budgetBalance)}/day`,
-      color: budgetBalance >= 0 ? 'text-green-400' : 'text-red-400',
-      icon: '💰'
+      status: budgetBalance >= 0 ? 'positive' : 'negative'
     },
     {
-      label: 'Military Power',
+      label: 'Military Strength',
       value: formatNumber(militaryStrength.toFixed(0)),
-      subtext: `${state.military.ismobilized ? 'Mobilized' : 'Peacetime'}`,
-      color: 'text-blue-400',
-      icon: '⚔️'
+      subtext: state.military.ismobilized ? 'Mobilized' : 'Peacetime',
+      status: state.military.ismobilized ? 'positive' : 'neutral'
     },
     {
       label: 'Public Morale',
       value: `${state.morale.current}%`,
       subtext: moraleStatus.text,
-      color: moraleStatus.color,
-      icon: '😊'
+      status: state.morale.current >= 70 ? 'positive' : state.morale.current >= 40 ? 'neutral' : 'negative',
+      useEmoji: '😊' // Keep emoji for morale as it conveys emotion better
     },
     {
-      label: 'Research Points',
+      label: 'Research Progress',
       value: formatNumber(state.research.points.toFixed(0)),
-      subtext: `+${state.research.pointsPerDay}/day`,
-      color: 'text-purple-400',
-      icon: '🔬'
+      subtext: `+${state.research.pointsPerDay} per day`,
+      status: 'positive'
     }
   ]
 
@@ -47,16 +44,29 @@ function GameStats() {
       {stats.map((stat, index) => (
         <div
           key={index}
-          className="bg-gray-800 p-5 rounded-lg border-2 border-gray-700 hover:border-gray-600 transition"
+          className="stat-card animate-fade-in"
+          style={{ animationDelay: `${index * 0.05}s` }}
         >
-          <div className="flex items-start justify-between mb-2">
-            <div className="text-sm text-gray-400">{stat.label}</div>
-            <div className="text-2xl">{stat.icon}</div>
+          <div className="flex items-start justify-between mb-3">
+            <div className="era-label">{stat.label}</div>
+            {stat.useEmoji && (
+              <div className="text-xl" style={{ filter: 'grayscale(0.3)' }}>
+                {stat.useEmoji}
+              </div>
+            )}
           </div>
-          <div className={`text-2xl font-bold mb-1 ${stat.color}`}>
+          
+          <div className={`era-value mb-2 ${
+            stat.status === 'positive' ? 'status-positive' :
+            stat.status === 'negative' ? 'status-negative' :
+            'status-neutral'
+          }`}>
             {stat.value}
           </div>
-          <div className="text-xs text-gray-500">{stat.subtext}</div>
+          
+          <div className="text-mono text-xs text-muted">
+            {stat.subtext}
+          </div>
         </div>
       ))}
     </div>
