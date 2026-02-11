@@ -61,6 +61,7 @@ export const initialGameState = {
   
   // AI countries
   aiCountries: {},
+  aiMemory: {}, // Track AI actions and decisions
   
   // Notifications
   notifications: []
@@ -90,6 +91,7 @@ export function gameReducer(state, action) {
         },
         relationships: countryData.initialRelationships,
         aiCountries: eraData.aiCountries,
+        aiMemory: {},
         notifications: [
           createNotification(
             NOTIFICATION_TYPES.SUCCESS,
@@ -331,13 +333,20 @@ export function gameReducer(state, action) {
         notifications: []
       }
     
-    case 'DECLARE_WAR':
+    case 'DECLARE_WAR': {
+      const { country } = action.payload
+      
+      // Prevent duplicate wars
+      if (state.wars.includes(country)) {
+        return state
+      }
+      
       return {
         ...state,
-        wars: [...state.wars, action.payload.country],
+        wars: [...state.wars, country],
         relationships: {
           ...state.relationships,
-          [action.payload.country]: -100
+          [country]: -100
         },
         morale: {
           ...state.morale,
@@ -348,13 +357,22 @@ export function gameReducer(state, action) {
           createNotification(
             NOTIFICATION_TYPES.WAR,
             'War Declared!',
-            `You are now at war with ${action.payload.country}`,
+            `You are now at war with ${country}`,
             state.currentDate
           )
         ]
       }
+    }
     
-    case 'ALLIANCE_PROPOSAL':
+    case 'ALLIANCE_PROPOSAL': {
+      const { country } = action.payload
+      
+      // Prevent duplicate proposals and proposals from already allied countries
+      if (state.alliances.includes(country) || 
+          state.pendingDecisions.some(d => d.type === 'alliance' && d.country === country)) {
+        return state
+      }
+      
       return {
         ...state,
         pendingDecisions: [
@@ -362,7 +380,7 @@ export function gameReducer(state, action) {
           {
             id: Date.now(),
             type: 'alliance',
-            country: action.payload.country,
+            country: country,
             timestamp: state.currentDate
           }
         ],
@@ -371,53 +389,79 @@ export function gameReducer(state, action) {
           createNotification(
             NOTIFICATION_TYPES.DIPLOMACY,
             'Alliance Proposed',
-            `${action.payload.country} wishes to form an alliance`,
+            `${country} wishes to form an alliance`,
             state.currentDate
           )
         ]
       }
+    }
     
-    case 'ACCEPT_ALLIANCE':
+    case 'ACCEPT_ALLIANCE': {
+      const { country } = action.payload
+      
+      // Update AI memory
+      const aiMemory = { ...state.aiMemory }
+      if (aiMemory[country]) {
+        aiMemory[country].hasActiveAlliance = true
+        aiMemory[country].allianceRejectedCount = 0
+      }
+      
       return {
         ...state,
-        alliances: [...state.alliances, action.payload.country],
+        alliances: [...state.alliances, country],
         relationships: {
           ...state.relationships,
-          [action.payload.country]: Math.min(100, (state.relationships[action.payload.country] || 0) + 30)
+          [country]: Math.min(100, (state.relationships[country] || 0) + 30)
         },
-        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country),
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== country),
+        aiMemory,
         notifications: [
           ...state.notifications,
           createNotification(
             NOTIFICATION_TYPES.SUCCESS,
             'Alliance Formed',
-            `You are now allied with ${action.payload.country}`,
+            `You are now allied with ${country}`,
             state.currentDate
           )
         ]
       }
+    }
     
-    case 'REJECT_ALLIANCE':
+    case 'REJECT_ALLIANCE': {
+      const { country } = action.payload
+      
+      // Update AI memory
+      const aiMemory = { ...state.aiMemory }
+      if (aiMemory[country]) {
+        aiMemory[country].allianceRejectedCount = (aiMemory[country].allianceRejectedCount || 0) + 1
+      }
+      
       return {
         ...state,
         relationships: {
           ...state.relationships,
-          [action.payload.country]: Math.max(-100, (state.relationships[action.payload.country] || 0) - 20)
+          [country]: Math.max(-100, (state.relationships[country] || 0) - 20)
         },
-        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country),
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== country),
+        aiMemory,
         notifications: [
           ...state.notifications,
           createNotification(
             NOTIFICATION_TYPES.DIPLOMACY,
             'Alliance Rejected',
-            `You declined ${action.payload.country}'s alliance proposal`,
+            `You declined ${country}'s alliance proposal`,
             state.currentDate
           )
         ]
       }
+    }
     
     case 'LOAD_GAME':
-      return action.payload
+      return {
+        ...action.payload,
+        // Ensure aiMemory exists
+        aiMemory: action.payload.aiMemory || {}
+      }
     
     default:
       return state
