@@ -5,7 +5,7 @@ import { useGameLoop } from '../hooks/useGameLoop'
 import { useAI } from '../hooks/useAI'
 import TimeControls from '../components/TimeControls'
 import EventModal from '../components/EventModal'
-import NotificationPanel from '../components/NotificationPanel'
+import NotificationCenter from '../components/NotificationCenter'
 import GameStats from '../components/GameStats'
 import ManagementTabs from '../components/ManagementTabs'
 import AllianceProposal from '../components/AllianceProposal'
@@ -118,7 +118,7 @@ function Game() {
       )}
 
       <AllianceProposal />
-      <NotificationPanel />
+      <NotificationCenter />
     </div>
   )
 }
