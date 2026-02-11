@@ -1,5 +1,6 @@
 import { getInitialCountryData } from '../data/countries'
 import { getEraData } from '../data/eras'
+import { createNotification, NOTIFICATION_TYPES } from '../utils/notifications'
 
 export const initialGameState = {
   // Game meta
@@ -88,7 +89,15 @@ export function gameReducer(state, action) {
           availableTech: eraData.technologies
         },
         relationships: countryData.initialRelationships,
-        aiCountries: eraData.aiCountries
+        aiCountries: eraData.aiCountries,
+        notifications: [
+          createNotification(
+            NOTIFICATION_TYPES.SUCCESS,
+            `Game Started: ${country}`,
+            `Leading ${country} through the ${era}`,
+            eraData.startDate
+          )
+        ]
       }
     }
     
@@ -101,6 +110,31 @@ export function gameReducer(state, action) {
       const newTreasury = state.resources.treasury + (state.resources.income - state.resources.expenses) * days
       const newResearchPoints = state.research.points + (state.research.pointsPerDay * days)
       
+      // Check for low treasury warning
+      const notifications = [...state.notifications]
+      if (newTreasury < 1000 && state.resources.treasury >= 1000) {
+        notifications.push(
+          createNotification(
+            NOTIFICATION_TYPES.WARNING,
+            'Treasury Running Low',
+            `Treasury: $${Math.round(newTreasury)}M - Consider increasing taxes`,
+            newDate.toISOString()
+          )
+        )
+      }
+      
+      // Check for low morale warning
+      if (state.morale.current < 30 && state.morale.current >= 30) {
+        notifications.push(
+          createNotification(
+            NOTIFICATION_TYPES.WARNING,
+            'Morale Critical',
+            'Population happiness is dangerously low',
+            newDate.toISOString()
+          )
+        )
+      }
+      
       return {
         ...state,
         currentDate: newDate.toISOString(),
@@ -112,7 +146,8 @@ export function gameReducer(state, action) {
         research: {
           ...state.research,
           points: newResearchPoints
-        }
+        },
+        notifications
       }
     }
     
@@ -125,14 +160,51 @@ export function gameReducer(state, action) {
         }
       }
     
-    case 'UPDATE_MILITARY':
+    case 'UPDATE_MILITARY': {
+      const updates = action.payload
+      const notifications = [...state.notifications]
+      
+      // Notify about recruitment
+      if (updates.army > state.military.army) {
+        notifications.push(
+          createNotification(
+            NOTIFICATION_TYPES.MILITARY,
+            'Army Recruitment',
+            `+${updates.army - state.military.army} Army units recruited`,
+            state.currentDate
+          )
+        )
+      }
+      if (updates.navy > state.military.navy) {
+        notifications.push(
+          createNotification(
+            NOTIFICATION_TYPES.MILITARY,
+            'Navy Expansion',
+            `+${updates.navy - state.military.navy} Naval units commissioned`,
+            state.currentDate
+          )
+        )
+      }
+      if (updates.airForce > state.military.airForce) {
+        notifications.push(
+          createNotification(
+            NOTIFICATION_TYPES.MILITARY,
+            'Air Force Growth',
+            `+${updates.airForce - state.military.airForce} Aircraft deployed`,
+            state.currentDate
+          )
+        )
+      }
+      
       return {
         ...state,
         military: {
           ...state.military,
-          ...action.payload
-        }
+          ...updates
+        },
+        notifications
       }
+    }
     
     case 'UPDATE_MORALE':
       return {
@@ -177,12 +249,12 @@ export function gameReducer(state, action) {
         isPaused: true,
         notifications: [
           ...state.notifications,
-          {
-            id: Date.now(),
-            type: 'event',
-            message: action.payload.title,
-            timestamp: state.currentDate
-          }
+          createNotification(
+            NOTIFICATION_TYPES.EVENT,
+            action.payload.title,
+            'A new event requires your attention',
+            state.currentDate
+          )
         ]
       }
     
@@ -238,12 +310,12 @@ export function gameReducer(state, action) {
         },
         notifications: [
           ...state.notifications,
-          {
-            id: Date.now(),
-            type: 'research',
-            message: `Research completed: ${action.payload.name}`,
-            timestamp: state.currentDate
-          }
+          createNotification(
+            NOTIFICATION_TYPES.RESEARCH,
+            `Research Completed: ${action.payload.name}`,
+            'Your scientists have made a breakthrough!',
+            state.currentDate
+          )
         ]
       }
     
@@ -251,6 +323,12 @@ export function gameReducer(state, action) {
       return {
         ...state,
         notifications: [...state.notifications, action.payload]
+      }
+    
+    case 'CLEAR_NOTIFICATIONS':
+      return {
+        ...state,
+        notifications: []
       }
     
     case 'DECLARE_WAR':
@@ -264,7 +342,16 @@ export function gameReducer(state, action) {
         morale: {
           ...state.morale,
           current: Math.max(0, state.morale.current - 10)
-        }
+        },
+        notifications: [
+          ...state.notifications,
+          createNotification(
+            NOTIFICATION_TYPES.WAR,
+            'War Declared!',
+            `You are now at war with ${action.payload.country}`,
+            state.currentDate
+          )
+        ]
       }
     
     case 'ALLIANCE_PROPOSAL':
@@ -278,6 +365,15 @@ export function gameReducer(state, action) {
             country: action.payload.country,
             timestamp: state.currentDate
           }
+        ],
+        notifications: [
+          ...state.notifications,
+          createNotification(
+            NOTIFICATION_TYPES.DIPLOMACY,
+            'Alliance Proposed',
+            `${action.payload.country} wishes to form an alliance`,
+            state.currentDate
+          )
         ]
       }
     
@@ -289,7 +385,16 @@ export function gameReducer(state, action) {
           ...state.relationships,
           [action.payload.country]: Math.min(100, (state.relationships[action.payload.country] || 0) + 30)
         },
-        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country)
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country),
+        notifications: [
+          ...state.notifications,
+          createNotification(
+            NOTIFICATION_TYPES.SUCCESS,
+            'Alliance Formed',
+            `You are now allied with ${action.payload.country}`,
+            state.currentDate
+          )
+        ]
       }
     
     case 'REJECT_ALLIANCE':
@@ -299,7 +404,16 @@ export function gameReducer(state, action) {
           ...state.relationships,
           [action.payload.country]: Math.max(-100, (state.relationships[action.payload.country] || 0) - 20)
         },
-        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country)
+        pendingDecisions: state.pendingDecisions.filter(d => d.country !== action.payload.country),
+        notifications: [
+          ...state.notifications,
+          createNotification(
+            NOTIFICATION_TYPES.DIPLOMACY,
+            'Alliance Rejected',
+            `You declined ${action.payload.country}'s alliance proposal`,
+            state.currentDate
+          )
+        ]
       }
     
     case 'LOAD_GAME':
