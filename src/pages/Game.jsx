@@ -6,11 +6,13 @@ import { useAI } from '../hooks/useAI'
 import TimeControls from '../components/TimeControls'
 import EventModal from '../components/EventModal'
 import NotificationCenter from '../components/NotificationCenter'
+import SaveLoadMenu from '../components/SaveLoadMenu'
 import GameStats from '../components/GameStats'
 import ManagementTabs from '../components/ManagementTabs'
 import AllianceProposal from '../components/AllianceProposal'
 import WarStatus from '../components/WarStatus'
 import HistoricalFact from '../components/HistoricalFact'
+import { autoSave } from '../utils/saveGame'
 
 function Game() {
   const location = useLocation()
@@ -38,6 +40,17 @@ function Game() {
       setSelectedEvent(state.activeEvents[0])
     }
   }, [state.activeEvents])
+
+  // Auto-save every 5 minutes
+  useEffect(() => {
+    if (!state.gameStarted) return
+
+    const autoSaveInterval = setInterval(() => {
+      autoSave(state)
+    }, 5 * 60 * 1000)
+
+    return () => clearInterval(autoSaveInterval)
+  }, [state])
 
   const handleEventClose = () => {
     setSelectedEvent(null)
@@ -119,6 +132,7 @@ function Game() {
 
       <AllianceProposal />
       <NotificationCenter />
+      <SaveLoadMenu />
     </div>
   )
 }
