@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGame } from '../context/GameContext'
 import { saveGame, loadGame, getSaveInfo, deleteSave } from '../utils/saveGame'
 import { useNavigate } from 'react-router-dom'
+import { initialGameState } from '../context/gameReducer'
 
 function SaveLoadMenu() {
   const { state, dispatch } = useGame()
@@ -34,7 +35,13 @@ function SaveLoadMenu() {
   }
 
   const handleRestart = () => {
+    // Delete all saves
     deleteSave()
+    
+    // Reset game state to initial
+    dispatch({ type: 'LOAD_GAME', payload: initialGameState })
+    
+    // Navigate to home
     navigate('/')
   }
 
@@ -142,7 +149,7 @@ function SaveLoadMenu() {
                 ) : (
                   <div className="space-y-2">
                     <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg text-center">
-                      <p className="text-red-300 font-semibold text-sm">⚠️ This will delete your current progress!</p>
+                      <p className="text-red-300 font-semibold text-sm">⚠️ This will delete all saves and return to menu!</p>
                     </div>
                     <div className="flex gap-2">
                       <button
