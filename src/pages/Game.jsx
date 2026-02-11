@@ -17,23 +17,33 @@ import { autoSave } from '../utils/saveGame'
 function Game() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { era, country } = location.state || {}
+  const { era, country, loadedGame } = location.state || {}
   const { state, initializeGame } = useGame()
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
   
   useGameLoop()
   useAI()
 
   useEffect(() => {
+    // Only initialize if we're not loading a saved game
+    if (loadedGame) {
+      // Game state already loaded in Home.jsx
+      setHasInitialized(true)
+      return
+    }
+
     if (!era || !country) {
       navigate('/')
       return
     }
 
-    if (!state.gameStarted) {
+    // Only initialize once and if game hasn't started
+    if (!state.gameStarted && !hasInitialized) {
       initializeGame(era, country, 'normal')
+      setHasInitialized(true)
     }
-  }, [era, country])
+  }, [era, country, loadedGame, hasInitialized])
 
   useEffect(() => {
     if (state.activeEvents.length > 0 && !selectedEvent) {
