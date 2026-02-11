@@ -143,6 +143,15 @@ export function gameReducer(state, action) {
         }
       }
     
+    case 'UPDATE_RESEARCH':
+      return {
+        ...state,
+        research: {
+          ...state.research,
+          ...action.payload
+        }
+      }
+    
     case 'PAUSE_GAME':
       return {
         ...state,
