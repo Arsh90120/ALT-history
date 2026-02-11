@@ -8,19 +8,30 @@ import { useGame } from '../context/GameContext'
 
 function Home() {
   const navigate = useNavigate()
-  const { dispatch } = useGame()
+  const { dispatch, state } = useGame()
   const [selectedEra, setSelectedEra] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState(null)
   const [saveInfo, setSaveInfo] = useState(null)
 
   useEffect(() => {
+    // Reset game state when returning to home
+    if (state.gameStarted) {
+      dispatch({ type: 'LOAD_GAME', payload: { gameStarted: false } })
+    }
+    
     const info = getSaveInfo()
     setSaveInfo(info)
   }, [])
 
   const handleStartGame = () => {
     if (selectedEra && selectedCountry) {
-      navigate('/game', { state: { era: selectedEra, country: selectedCountry } })
+      navigate('/game', { 
+        state: { 
+          era: selectedEra, 
+          country: selectedCountry,
+          loadedGame: false 
+        } 
+      })
     }
   }
 
@@ -28,7 +39,13 @@ function Home() {
     const result = loadGame()
     if (result.success) {
       dispatch({ type: 'LOAD_GAME', payload: result.data })
-      navigate('/game', { state: { era: result.data.era, country: result.data.playerCountry } })
+      navigate('/game', { 
+        state: { 
+          era: result.data.era, 
+          country: result.data.playerCountry,
+          loadedGame: true 
+        } 
+      })
     }
   }
 
